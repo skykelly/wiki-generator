@@ -21,11 +21,17 @@ export interface KnowledgeChunk {
 export async function matchKnowledgeChunks(
   embedding: number[],
   threshold = 0.32,
-  count = 8
+  count = 8,
+  wikiId?: string,
 ): Promise<KnowledgeChunk[]> {
   const result = await db.execute(sql`
     SELECT ref_type, ref_id, content, similarity
-    FROM match_knowledge_chunks(${JSON.stringify(embedding)}::vector, ${threshold}, ${count})
+    FROM match_knowledge_chunks(
+      ${JSON.stringify(embedding)}::vector,
+      ${threshold},
+      ${count},
+      ${wikiId ?? null}
+    )
   `)
   return result.rows as unknown as KnowledgeChunk[]
 }

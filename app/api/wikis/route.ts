@@ -34,7 +34,14 @@ export async function POST(req: Request) {
   return Response.json({ id: row.id, slug: row.slug, title: row.title, status: row.status })
 }
 
-export async function GET() {
-  const rows = await db.select().from(wikis).where(ne(wikis.id, 'wiki_homestyle'))
+export async function GET(req: Request) {
+  // session auth 또는 INGEST_SECRET bearer 허용 (GitHub Actions discover script용)
+  const session = await auth()
+  const bearer = req.headers.get('Authorization')
+  const secret = process.env.INGEST_SECRET
+  const isBearer = secret && bearer === `Bearer ${secret}`
+  if (!session && !isBearer) return Response.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const rows = await db.select().from(wikis)
   return Response.json(rows)
 }

@@ -2,7 +2,7 @@ import { and, eq, sql } from 'drizzle-orm'
 import type OpenAI from 'openai'
 import { auth } from '@/auth'
 import { db } from '@/lib/db'
-import { chat_sessions } from '@/lib/db/schema'
+import { chat_sessions, wikis } from '@/lib/db/schema'
 import { embedQuery, matchKnowledgeChunks, buildCitations } from '@/lib/chat'
 import { getOpenAI } from '@/lib/openai'
 import type { ChatMessage } from '@/lib/types'
@@ -10,10 +10,13 @@ import type { ChatMessage } from '@/lib/types'
 export const runtime = 'nodejs'
 export const maxDuration = 60
 
-const SYSTEM_PROMPT = `당신은 Homestyle Wiki의 AI 어시스턴트입니다.
-제공된 컨텍스트(concepts, pages, sources)를 바탕으로 한국어로 답변하세요.
+function buildSystemPrompt(wikiTitle: string, language: string) {
+  const lang = language === 'en' ? 'English' : '한국어'
+  return `당신은 ${wikiTitle} 위키의 AI 어시스턴트입니다.
+제공된 컨텍스트(concepts, pages, sources)를 바탕으로 ${lang}로 답변하세요.
 답변 말미에 참고한 위키 페이지나 소스를 간략히 언급하세요.
 컨텍스트에 없는 내용은 솔직하게 모른다고 답하세요.`
+}
 
 export async function POST(req: Request) {
   const session = await auth()
@@ -41,10 +44,16 @@ export async function POST(req: Request) {
   }
   if (isNew) sessionId = crypto.randomUUID()
 
+  // 위키 메타데이터 (언어, 제목)
+  const [wikiRow] = await db.select({ title: wikis.title, language: wikis.language })
+    .from(wikis).where(eq(wikis.id, wikiId))
+  const wikiTitle = wikiRow?.title ?? wikiId
+  const wikiLanguage = wikiRow?.language ?? 'ko'
+
   // 1. 질문 임베딩
   const queryEmbedding = await embedQuery(message)
-  // 2. RAG 검색
-  const chunks = await matchKnowledgeChunks(queryEmbedding, 0.32, 8)
+  // 2. RAG 검색 (wiki_id 필터로 해당 위키만 검색)
+  const chunks = await matchKnowledgeChunks(queryEmbedding, 0.32, 8, wikiId)
   // 3. citations 구성
   const citations = await buildCitations(chunks)
 
@@ -53,7 +62,7 @@ export async function POST(req: Request) {
     : '(관련 컨텍스트 없음)'
 
   const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [
-    { role: 'system', content: `${SYSTEM_PROMPT}\n\n## 컨텍스트\n${contextText}` },
+    { role: 'system', content: `${buildSystemPrompt(wikiTitle, wikiLanguage)}\n\n## 컨텍스트\n${contextText}` },
     ...history.map((m): OpenAI.Chat.ChatCompletionMessageParam => ({ role: m.role, content: m.content })),
     { role: 'user', content: message },
   ]

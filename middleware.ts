@@ -13,6 +13,7 @@ export default auth((req) => {
 export const config = {
   matcher: [
     '/admin/:path*',
+    '/create',
     '/chat', '/chat/:path*',
     '/w/:wikiSlug/admin/:path*',
     '/w/:wikiSlug/chat', '/w/:wikiSlug/chat/:path*',

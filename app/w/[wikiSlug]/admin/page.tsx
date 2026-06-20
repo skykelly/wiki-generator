@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation'
 import { auth } from '@/auth'
 import {
   getEditorialContent, getEditorialVersions, getConceptItems,
-  getWikiPages, getMetricsContent, getIngestLog, getKnowledgeGraph,
+  getWikiPages, getMetricsContent, getIngestLog, getKnowledgeGraph, getRssFeeds,
 } from '@/lib/data'
 import AdminTabs from '@/app/admin/AdminTabs'
 
@@ -17,7 +17,7 @@ export default async function WikiAdminPage({
   const session = await auth()
   if (!session) redirect(`/auth/signin?callbackUrl=/w/${wikiSlug}/admin`)
 
-  const [editorialContent, editorialVersions, concepts, pages, metrics, ingestLog, graph] = await Promise.all([
+  const [editorialContent, editorialVersions, concepts, pages, metrics, ingestLog, graph, rssFeeds] = await Promise.all([
     getEditorialContent(wikiId),
     getEditorialVersions(wikiId),
     getConceptItems(wikiId),
@@ -25,6 +25,7 @@ export default async function WikiAdminPage({
     getMetricsContent(wikiId),
     getIngestLog(wikiId),
     getKnowledgeGraph(wikiId),
+    getRssFeeds(wikiId),
   ])
 
   return (
@@ -46,6 +47,7 @@ export default async function WikiAdminPage({
         metrics={metrics}
         ingestLog={ingestLog}
         graphBuiltAt={graph.built_at}
+        rssFeeds={rssFeeds}
         wikiId={wikiId}
       />
     </div>

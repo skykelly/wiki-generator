@@ -12,12 +12,20 @@ interface Props {
   session: Session | null
   wikiSlug: string
   wikiTitle: string
+  wikiStatus?: string
   wikiPages: WikiPageItem[]
   wikiTopics: TopicNode[]
   concepts: ConceptItem[]
 }
 
-export default function WikiHeader({ session, wikiSlug, wikiTitle, wikiPages, wikiTopics, concepts }: Props) {
+const STATUS_BADGE: Record<string, { label: string; cls: string }> = {
+  scaffolding: { label: '스캐폴딩', cls: 'text-yellow-400 bg-yellow-400/10 border-yellow-800/50' },
+  reviewing:   { label: '검토 중',  cls: 'text-cyan-400 bg-cyan-400/10 border-cyan-800/50' },
+  drafting:    { label: '초안 생성', cls: 'text-yellow-400 bg-yellow-400/10 border-yellow-800/50' },
+  extracting:  { label: '개념 추출', cls: 'text-purple-400 bg-purple-400/10 border-purple-800/50' },
+}
+
+export default function WikiHeader({ session, wikiSlug, wikiTitle, wikiStatus, wikiPages, wikiTopics, concepts }: Props) {
   const [mobileOpen, setMobileOpen] = useState(false)
   const [indexOpen, setIndexOpen] = useState(false)
   const pathname = usePathname()
@@ -59,6 +67,14 @@ export default function WikiHeader({ session, wikiSlug, wikiTitle, wikiPages, wi
           <Link href={base} className="text-white font-semibold tracking-tight">
             {wikiTitle}
           </Link>
+          {wikiStatus && STATUS_BADGE[wikiStatus] && (
+            <Link
+              href={`${base}/admin/seed`}
+              className={`hidden sm:inline-flex items-center text-xs px-2 py-0.5 rounded border font-medium ${STATUS_BADGE[wikiStatus].cls}`}
+            >
+              {STATUS_BADGE[wikiStatus].label}
+            </Link>
+          )}
         </div>
 
         {/* 데스크탑 nav */}

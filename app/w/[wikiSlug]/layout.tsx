@@ -32,6 +32,7 @@ export default async function WikiLayout({
         session={session}
         wikiSlug={wikiSlug}
         wikiTitle={wiki.title}
+        wikiStatus={wiki.status}
         wikiPages={wikiPages}
         wikiTopics={wikiTopics}
         concepts={concepts}

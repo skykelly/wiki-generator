@@ -20,6 +20,7 @@ export async function POST(req: Request) {
     url: body.url,
     publisher: body.publisher,
     source_type: body.source_type ?? 'external',
+    wiki_id: body.wiki_id,
   })
 
   return Response.json({ source_id: sourceId })

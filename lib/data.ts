@@ -97,6 +97,28 @@ export async function getWikis(): Promise<WikiItem[]> {
   } catch { return [] }
 }
 
+export interface WikiStats {
+  page_count: number
+  concept_count: number
+  source_count: number
+}
+
+export async function getWikiStats(wikiId: string): Promise<WikiStats> {
+  noStore()
+  try {
+    const [pCount, cCount, sCount] = await Promise.all([
+      db.select({ count: sql<number>`count(*)` }).from(pages).where(eq(pages.wiki_id, wikiId)),
+      db.select({ count: sql<number>`count(*)` }).from(concepts).where(eq(concepts.wiki_id, wikiId)),
+      db.select({ count: sql<number>`count(*)` }).from(sources).where(and(eq(sources.wiki_id, wikiId), eq(sources.status, 'done'))),
+    ])
+    return {
+      page_count: Number(pCount[0]?.count ?? 0),
+      concept_count: Number(cCount[0]?.count ?? 0),
+      source_count: Number(sCount[0]?.count ?? 0),
+    }
+  } catch { return { page_count: 0, concept_count: 0, source_count: 0 } }
+}
+
 export async function getWikiBySlug(slug: string): Promise<WikiItem | null> {
   noStore()
   try {
@@ -250,6 +272,11 @@ export async function getChatSessions(userEmail: string, wikiId = DEFAULT_WIKI):
       .orderBy(desc(chat_sessions.updated_at))
     return rows.map(mapChatSession)
   } catch { return [] }
+}
+
+export async function getRssFeeds(wikiId = DEFAULT_WIKI): Promise<import('./feeds').FeedConfig[]> {
+  noStore()
+  return getSettingJson<import('./feeds').FeedConfig[]>('rss_feeds', [], wikiId)
 }
 
 export async function getChatSession(id: string, userEmail: string): Promise<ChatSession | null> {

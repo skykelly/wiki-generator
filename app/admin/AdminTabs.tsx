@@ -1,12 +1,14 @@
 'use client'
 import { useState } from 'react'
 import type { ConceptItem, WikiPageItem, MetricCard, EditorialVersion, IngestLogEntry } from '@/lib/types'
+import type { FeedConfig } from '@/lib/feeds'
 import EditorialTab from './EditorialTab'
 import ConceptsTab from './ConceptsTab'
 import PagesTab from './PagesTab'
 import MetricsTab from './MetricsTab'
 import HealthTab from './HealthTab'
 import GraphTab from './GraphTab'
+import FeedsTab from './FeedsTab'
 
 const TABS = [
   { key: 'editorial', label: 'Editorial' },
@@ -14,6 +16,7 @@ const TABS = [
   { key: 'pages', label: 'Wiki Pages' },
   { key: 'metrics', label: 'Metrics' },
   { key: 'health', label: 'Wiki Health' },
+  { key: 'feeds', label: 'Feeds' },
   { key: 'graph', label: 'Graph' },
 ] as const
 
@@ -27,6 +30,7 @@ interface Props {
   metrics: MetricCard[]
   ingestLog: IngestLogEntry[]
   graphBuiltAt: string
+  rssFeeds?: FeedConfig[]
   wikiId?: string
 }
 
@@ -66,6 +70,7 @@ export default function AdminTabs(props: Props) {
       {tab === 'pages' && <PagesTab pages={props.pages} wikiId={props.wikiId} />}
       {tab === 'metrics' && <MetricsTab metrics={props.metrics} wikiId={props.wikiId} />}
       {tab === 'health' && <HealthTab concepts={props.concepts} ingestLog={props.ingestLog} onEditConcept={goToConcept} wikiId={props.wikiId} />}
+      {tab === 'feeds' && <FeedsTab wikiId={props.wikiId} initialFeeds={props.rssFeeds} />}
       {tab === 'graph' && <GraphTab builtAt={props.graphBuiltAt} wikiId={props.wikiId} />}
     </div>
   )

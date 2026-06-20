@@ -1,7 +1,9 @@
 import Link from 'next/link'
-import { getEditorialContent, getConceptItems, getSources } from '@/lib/data'
+import { getEditorialContent, getConceptItems, getSources, getWikiBySlug } from '@/lib/data'
 import { renderMarkdown } from '@/lib/markdown'
 import MarkdownRenderer from '@/components/MarkdownRenderer'
+
+const PENDING_STATUSES = ['scaffolding', 'reviewing', 'drafting', 'extracting', 'activating']
 
 export default async function WikiHomePage({
   params,
@@ -11,6 +13,24 @@ export default async function WikiHomePage({
   const { wikiSlug } = await params
   const wikiId = `wiki_${wikiSlug}`
   const base = `/w/${wikiSlug}`
+
+  const wiki = await getWikiBySlug(wikiSlug)
+
+  if (wiki && PENDING_STATUSES.includes(wiki.status)) {
+    return (
+      <div className="max-w-2xl mx-auto px-4 sm:px-6 py-20 text-center">
+        <div className="text-4xl mb-6">⚙️</div>
+        <h1 className="text-2xl font-bold text-neutral-100 mb-3">{wiki.title}</h1>
+        <p className="text-neutral-400 mb-8">
+          이 위키는 현재 생성 중입니다. 시드 파이프라인을 완료하면 콘텐츠가 표시됩니다.
+        </p>
+        <Link href={`${base}/admin/seed`}
+          className="inline-flex items-center gap-2 px-5 py-2.5 bg-cyan-600 hover:bg-cyan-500 text-white text-sm font-medium rounded-lg transition-colors">
+          시드 파이프라인 계속하기 →
+        </Link>
+      </div>
+    )
+  }
 
   const [editorialContent, allConcepts, allSources] = await Promise.all([
     getEditorialContent(wikiId),

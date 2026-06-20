@@ -67,6 +67,7 @@ function mapPage(r: typeof pages.$inferSelect): WikiPageItem {
     content: r.content ?? undefined,
     image_url: r.image_url ?? undefined,
     image_source_url: r.image_source_url ?? undefined,
+    draft_status: r.draft_status ?? 'approved',
     updated_at: r.updated_at?.toISOString() ?? '',
   }
 }

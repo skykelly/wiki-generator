@@ -39,7 +39,12 @@ export default async function WikiPageDetail({
               {page.chapter_number}{chapterTitle ? ` ${chapterTitle}` : ''}
             </h3>
           )}
-          <h1 className="text-3xl font-semibold text-white mb-2 leading-snug">{page.title}</h1>
+          <div className="flex items-center gap-3 mb-2">
+            <h1 className="text-3xl font-semibold text-white leading-snug">{page.title}</h1>
+            {page.draft_status === 'generated' && (
+              <span className="text-xs bg-yellow-400/10 border border-yellow-800/50 text-yellow-400 px-2 py-0.5 rounded-md shrink-0">AI 초안</span>
+            )}
+          </div>
 
           {page.image_url && (
             <div className="mb-4">

@@ -50,6 +50,7 @@ export interface WikiPageItem {
   content?: string
   image_url?: string
   image_source_url?: string
+  draft_status?: string
   updated_at: string
 }
 

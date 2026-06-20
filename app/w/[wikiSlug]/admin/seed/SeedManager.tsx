@@ -1,5 +1,5 @@
 'use client'
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useEffect } from 'react'
 import Link from 'next/link'
 import type { WikiItem, ScaffoldResult, ScaffoldChapter, ScaffoldConcept, SeedProgress } from '@/lib/types'
 
@@ -58,7 +58,21 @@ export default function SeedManager({ wiki, wikiSlug }: Props) {
   const [scaffold, setScaffold] = useState<ScaffoldResult | null>(wiki.scaffold_result ?? null)
   const [progress, setProgress] = useState<SeedProgress | null>(wiki.seed_progress ?? null)
   const [activeTab, setActiveTab] = useState<'chapters' | 'concepts' | 'feeds'>('chapters')
+  const [elapsed, setElapsed] = useState(0)
   const logRef = useRef<HTMLDivElement>(null)
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+
+  const isRunning = ['scaffolding', 'drafting', 'extracting', 'activating'].includes(phase)
+
+  useEffect(() => {
+    if (isRunning) {
+      setElapsed(0)
+      timerRef.current = setInterval(() => setElapsed((s) => s + 1), 1000)
+    } else {
+      if (timerRef.current) clearInterval(timerRef.current)
+    }
+    return () => { if (timerRef.current) clearInterval(timerRef.current) }
+  }, [isRunning])
 
   const appendLog = useCallback((msg: string) => {
     setLog((prev) => [...prev, msg])
@@ -174,7 +188,20 @@ export default function SeedManager({ wiki, wikiSlug }: Props) {
 
       {/* Status + action button */}
       <div className="flex items-center justify-between bg-neutral-900 border border-neutral-800 rounded-xl px-5 py-4">
-        <p className={`font-semibold ${PHASE_COLOR[phase]}`}>{STEP_LABELS[phase]}</p>
+        <div className="flex items-center gap-3">
+          {isRunning && (
+            <svg className="animate-spin h-4 w-4 text-yellow-400 shrink-0" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+            </svg>
+          )}
+          <p className={`font-semibold ${PHASE_COLOR[phase]}`}>{STEP_LABELS[phase]}</p>
+          {isRunning && (
+            <span className="text-xs text-neutral-500 font-mono">
+              {Math.floor(elapsed / 60)}:{String(elapsed % 60).padStart(2, '0')} 경과
+            </span>
+          )}
+        </div>
         <div className="flex gap-2">
           {(phase === 'idle' || phase === 'error') && (
             <button onClick={startScaffold}

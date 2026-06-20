@@ -10,11 +10,12 @@ export default async function SearchPage({
 }) {
   const [{ wikiSlug }, { q }] = await Promise.all([params, searchParams])
   const items = await getKnowledgeItems(`wiki_${wikiSlug}`)
+  const base = `/w/${wikiSlug}`
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
       <h1 className="text-lg font-semibold text-white mb-4">검색</h1>
-      <SearchResults items={items} initialQuery={q ?? ''} />
+      <SearchResults items={items} initialQuery={q ?? ''} basePath={base} />
     </div>
   )
 }

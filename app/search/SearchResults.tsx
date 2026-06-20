@@ -16,19 +16,20 @@ const TYPE_LABELS: Record<KnowledgeItem['type'], string> = {
   page: 'Wiki',
 }
 
-function itemHref(item: KnowledgeItem): string {
+function itemHref(item: KnowledgeItem, basePath: string): string {
   switch (item.type) {
-    case 'source': return `/sources/${item.id}`
-    case 'concept': return `/concepts/${item.slug}`
-    case 'page': return `/wiki/${item.slug}`
+    case 'source': return `${basePath}/sources/${item.id}`
+    case 'concept': return `${basePath}/concepts/${item.slug}`
+    case 'page': return `${basePath}/wiki/${item.slug}`
   }
 }
 
 export default function SearchResults({
-  items, initialQuery,
+  items, initialQuery, basePath = '',
 }: {
   items: KnowledgeItem[]
   initialQuery: string
+  basePath?: string
 }) {
   const [query, setQuery] = useState(initialQuery)
   const [activeTab, setActiveTab] = useState<'all' | KnowledgeItem['type']>('all')
@@ -82,7 +83,7 @@ export default function SearchResults({
           {filtered.map((item) => (
             <Link
               key={`${item.type}:${item.id}`}
-              href={itemHref(item)}
+              href={itemHref(item, basePath)}
               className="group block bg-neutral-900 hover:bg-neutral-800/80 border border-neutral-800 hover:border-neutral-700 rounded-xl p-4 transition-all"
             >
               <div className="flex items-start justify-between gap-2">

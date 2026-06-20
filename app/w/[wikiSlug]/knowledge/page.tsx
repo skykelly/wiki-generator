@@ -8,6 +8,7 @@ export default async function KnowledgePage({
 }) {
   const { wikiSlug } = await params
   const graph = await getKnowledgeGraph(`wiki_${wikiSlug}`)
+  const base = `/w/${wikiSlug}`
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
@@ -23,7 +24,7 @@ export default async function KnowledgePage({
           아직 생성된 그래프가 없습니다. Admin → Graph 탭에서 &quot;그래프 재생성&quot;을 실행하세요.
         </p>
       ) : (
-        <KnowledgeGraph data={graph} />
+        <KnowledgeGraph data={graph} basePath={base} />
       )}
     </div>
   )

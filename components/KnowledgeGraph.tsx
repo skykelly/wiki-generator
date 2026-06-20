@@ -19,7 +19,7 @@ const TYPE_LABEL: Record<NodeType, string> = { topic: '토픽', concept: '개념
 const BASE_RADIUS: Record<NodeType, number> = { topic: 10, concept: 6.3, source: 5.6 }
 const NODE_VAL: Record<NodeType, number> = { topic: 100, concept: 40, source: 31 }
 
-export default function KnowledgeGraph({ data }: { data: KnowledgeGraphData }) {
+export default function KnowledgeGraph({ data, basePath = '' }: { data: KnowledgeGraphData; basePath?: string }) {
   const fgRef = useRef<ForceGraphMethods<KnowledgeGraphNode, object> | undefined>(undefined)
   const containerRef = useRef<HTMLDivElement>(null)
   const panelRef = useRef<HTMLDivElement>(null)
@@ -258,7 +258,7 @@ export default function KnowledgeGraph({ data }: { data: KnowledgeGraphData }) {
                   )}
                 </div>
                 {selected.slug && (
-                  <Link href={`/concepts/${selected.slug}`} className="text-xs text-accent-500 hover:text-accent-400 transition-colors inline-block">
+                  <Link href={`${basePath}/concepts/${selected.slug}`} className="text-xs text-accent-500 hover:text-accent-400 transition-colors inline-block">
                     전체 보기 →
                   </Link>
                 )}
@@ -284,7 +284,7 @@ export default function KnowledgeGraph({ data }: { data: KnowledgeGraphData }) {
                     </div>
                   )
                 )}
-                <Link href={`/sources/${selected.id}`} className="text-xs text-accent-500 hover:text-accent-400 transition-colors inline-block">
+                <Link href={`${basePath}/sources/${selected.id}`} className="text-xs text-accent-500 hover:text-accent-400 transition-colors inline-block">
                   전체 보기 →
                 </Link>
               </div>

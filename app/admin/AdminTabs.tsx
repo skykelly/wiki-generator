@@ -27,6 +27,7 @@ interface Props {
   metrics: MetricCard[]
   ingestLog: IngestLogEntry[]
   graphBuiltAt: string
+  wikiId?: string
 }
 
 export default function AdminTabs(props: Props) {
@@ -54,7 +55,7 @@ export default function AdminTabs(props: Props) {
         ))}
       </div>
 
-      {tab === 'editorial' && <EditorialTab content={props.editorialContent} versions={props.editorialVersions} />}
+      {tab === 'editorial' && <EditorialTab content={props.editorialContent} versions={props.editorialVersions} wikiId={props.wikiId} />}
       {tab === 'concepts' && (
         <ConceptsTab
           concepts={props.concepts}
@@ -62,10 +63,10 @@ export default function AdminTabs(props: Props) {
           onFocusConsumed={() => setFocusConceptSlug(null)}
         />
       )}
-      {tab === 'pages' && <PagesTab pages={props.pages} />}
-      {tab === 'metrics' && <MetricsTab metrics={props.metrics} />}
-      {tab === 'health' && <HealthTab concepts={props.concepts} ingestLog={props.ingestLog} onEditConcept={goToConcept} />}
-      {tab === 'graph' && <GraphTab builtAt={props.graphBuiltAt} />}
+      {tab === 'pages' && <PagesTab pages={props.pages} wikiId={props.wikiId} />}
+      {tab === 'metrics' && <MetricsTab metrics={props.metrics} wikiId={props.wikiId} />}
+      {tab === 'health' && <HealthTab concepts={props.concepts} ingestLog={props.ingestLog} onEditConcept={goToConcept} wikiId={props.wikiId} />}
+      {tab === 'graph' && <GraphTab builtAt={props.graphBuiltAt} wikiId={props.wikiId} />}
     </div>
   )
 }

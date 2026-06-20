@@ -1,14 +1,16 @@
 import { unstable_noStore as noStore } from 'next/cache'
 import { and, asc, desc, eq, sql } from 'drizzle-orm'
 import { db } from './db'
-import { sources, concepts, pages, chat_sessions } from './db/schema'
+import { sources, concepts, pages, chat_sessions, wikis } from './db/schema'
 import { getSetting, getSettingJson } from './settings'
 import type {
   SourceItem, ConceptItem, WikiPageItem, KnowledgeItem,
   TopicNode, MetricCard, KnowledgeGraphData,
   IngestLogEntry, EditorialVersion, SynthesisResult,
-  ChatSession, ChatMessage,
+  ChatSession, ChatMessage, WikiItem,
 } from './types'
+
+const DEFAULT_WIKI = 'wiki_homestyle'
 
 // ─── mappers ──────────────────────────────────────────────
 
@@ -69,12 +71,46 @@ function mapPage(r: typeof pages.$inferSelect): WikiPageItem {
   }
 }
 
-// ─── sources ──────────────────────────────────────────────
+function mapWiki(r: typeof wikis.$inferSelect): WikiItem {
+  return {
+    id: r.id,
+    slug: r.slug,
+    title: r.title,
+    description: r.description ?? undefined,
+    topic: r.topic ?? undefined,
+    language: r.language ?? 'ko',
+    status: r.status ?? 'ready',
+    created_at: r.created_at?.toISOString() ?? '',
+    updated_at: r.updated_at?.toISOString() ?? '',
+  }
+}
 
-export async function getSources(): Promise<SourceItem[]> {
+// ─── wikis ────────────────────────────────────────────────
+
+export async function getWikis(): Promise<WikiItem[]> {
   noStore()
   try {
-    const rows = await db.select().from(sources).orderBy(desc(sources.created_at))
+    const rows = await db.select().from(wikis).orderBy(desc(wikis.created_at))
+    return rows.map(mapWiki)
+  } catch { return [] }
+}
+
+export async function getWikiBySlug(slug: string): Promise<WikiItem | null> {
+  noStore()
+  try {
+    const [row] = await db.select().from(wikis).where(eq(wikis.slug, slug))
+    return row ? mapWiki(row) : null
+  } catch { return null }
+}
+
+// ─── sources ──────────────────────────────────────────────
+
+export async function getSources(wikiId = DEFAULT_WIKI): Promise<SourceItem[]> {
+  noStore()
+  try {
+    const rows = await db.select().from(sources)
+      .where(eq(sources.wiki_id, wikiId))
+      .orderBy(desc(sources.created_at))
     return rows.map(mapSource)
   } catch { return [] }
 }
@@ -89,48 +125,55 @@ export async function getSourceById(id: string): Promise<SourceItem | null> {
 
 // ─── concepts ─────────────────────────────────────────────
 
-export async function getConceptItems(): Promise<ConceptItem[]> {
+export async function getConceptItems(wikiId = DEFAULT_WIKI): Promise<ConceptItem[]> {
   noStore()
   try {
-    const rows = await db.select().from(concepts).orderBy(asc(concepts.slug))
+    const rows = await db.select().from(concepts)
+      .where(eq(concepts.wiki_id, wikiId))
+      .orderBy(asc(concepts.slug))
     return rows.map(mapConcept)
   } catch { return [] }
 }
 
-export async function getConceptBySlug(slug: string): Promise<ConceptItem | null> {
+export async function getConceptBySlug(slug: string, wikiId = DEFAULT_WIKI): Promise<ConceptItem | null> {
   noStore()
   try {
-    const [row] = await db.select().from(concepts).where(eq(concepts.slug, slug))
+    const [row] = await db.select().from(concepts)
+      .where(and(eq(concepts.slug, slug), eq(concepts.wiki_id, wikiId)))
     return row ? mapConcept(row) : null
   } catch { return null }
 }
 
 // ─── pages ────────────────────────────────────────────────
 
-export async function getWikiPages(): Promise<WikiPageItem[]> {
+export async function getWikiPages(wikiId = DEFAULT_WIKI): Promise<WikiPageItem[]> {
   noStore()
   try {
-    const rows = await db.select().from(pages).orderBy(asc(pages.chapter_number), asc(pages.slug))
+    const rows = await db.select().from(pages)
+      .where(eq(pages.wiki_id, wikiId))
+      .orderBy(asc(pages.chapter_number), asc(pages.slug))
     return rows.map(mapPage)
   } catch { return [] }
 }
 
-export async function getPageBySlug(slug: string): Promise<WikiPageItem | null> {
+export async function getPageBySlug(slug: string, wikiId = DEFAULT_WIKI): Promise<WikiPageItem | null> {
   noStore()
   try {
-    const [row] = await db.select().from(pages).where(eq(pages.slug, slug))
+    const [row] = await db.select().from(pages)
+      .where(and(eq(pages.slug, slug), eq(pages.wiki_id, wikiId)))
     return row ? mapPage(row) : null
   } catch { return null }
 }
 
 // ─── knowledge view (unified search) ──────────────────────
 
-export async function getKnowledgeItems(): Promise<KnowledgeItem[]> {
+export async function getKnowledgeItems(wikiId = DEFAULT_WIKI): Promise<KnowledgeItem[]> {
   noStore()
   try {
     const result = await db.execute(sql`
       SELECT id, type, title, slug, summary, topics, updated_at
       FROM knowledge_view
+      WHERE wiki_id = ${wikiId}
       ORDER BY updated_at DESC
     `)
     return (result.rows as Array<{
@@ -150,39 +193,39 @@ export async function getKnowledgeItems(): Promise<KnowledgeItem[]> {
 
 // ─── editorial ────────────────────────────────────────────
 
-export async function getEditorialContent(): Promise<string> {
+export async function getEditorialContent(wikiId = DEFAULT_WIKI): Promise<string> {
   noStore()
-  try { return (await getSetting('editorial_content')) ?? '' }
+  try { return (await getSetting('editorial_content', wikiId)) ?? '' }
   catch { return '' }
 }
 
-export async function getEditorialVersions(): Promise<EditorialVersion[]> {
+export async function getEditorialVersions(wikiId = DEFAULT_WIKI): Promise<EditorialVersion[]> {
   noStore()
-  return getSettingJson<EditorialVersion[]>('editorial_versions', [])
+  return getSettingJson<EditorialVersion[]>('editorial_versions', [], wikiId)
 }
 
 // ─── topics / metrics / graph / ingest_log ────────────────
 
-export async function getTopicsConfig(): Promise<TopicNode[]> {
+export async function getTopicsConfig(wikiId = DEFAULT_WIKI): Promise<TopicNode[]> {
   noStore()
-  return getSettingJson<TopicNode[]>('topics_config', [])
+  return getSettingJson<TopicNode[]>('topics_config', [], wikiId)
 }
 
-export async function getMetricsContent(): Promise<MetricCard[]> {
+export async function getMetricsContent(wikiId = DEFAULT_WIKI): Promise<MetricCard[]> {
   noStore()
-  return getSettingJson<MetricCard[]>('metrics_content', [])
+  return getSettingJson<MetricCard[]>('metrics_content', [], wikiId)
 }
 
-export async function getKnowledgeGraph(): Promise<KnowledgeGraphData> {
+export async function getKnowledgeGraph(wikiId = DEFAULT_WIKI): Promise<KnowledgeGraphData> {
   noStore()
   return getSettingJson<KnowledgeGraphData>('graph_data', {
     nodes: [], links: [], built_at: '',
-  })
+  }, wikiId)
 }
 
-export async function getIngestLog(): Promise<IngestLogEntry[]> {
+export async function getIngestLog(wikiId = DEFAULT_WIKI): Promise<IngestLogEntry[]> {
   noStore()
-  return getSettingJson<IngestLogEntry[]>('ingest_log', [])
+  return getSettingJson<IngestLogEntry[]>('ingest_log', [], wikiId)
 }
 
 // ─── chat sessions ─────────────────────────────────────────
@@ -196,12 +239,12 @@ function mapChatSession(r: typeof chat_sessions.$inferSelect): ChatSession {
   }
 }
 
-export async function getChatSessions(userEmail: string): Promise<ChatSession[]> {
+export async function getChatSessions(userEmail: string, wikiId = DEFAULT_WIKI): Promise<ChatSession[]> {
   noStore()
   try {
     const rows = await db.select()
       .from(chat_sessions)
-      .where(eq(chat_sessions.user_email, userEmail))
+      .where(and(eq(chat_sessions.user_email, userEmail), eq(chat_sessions.wiki_id, wikiId)))
       .orderBy(desc(chat_sessions.updated_at))
     return rows.map(mapChatSession)
   } catch { return [] }

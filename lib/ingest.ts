@@ -1,23 +1,23 @@
-import { eq, sql } from 'drizzle-orm'
+import { and, eq, sql } from 'drizzle-orm'
 import { db } from './db'
 import { sources, settings } from './db/schema'
 import { slugify } from './slug'
 import { chunkText, rebuildEmbeddings } from './embed'
 import { synthesizeConcepts } from './synthesize'
 import { getOpenAI } from './openai'
+import { getSetting, upsertSetting } from './settings'
 import type { SynthesisResult, IngestLogEntry } from './types'
 
-async function getIngestLog(): Promise<IngestLogEntry[]> {
-  const [row] = await db.select({ value: settings.value }).from(settings).where(eq(settings.key, 'ingest_log'))
+async function getIngestLog(wikiId: string): Promise<IngestLogEntry[]> {
+  const [row] = await db.select({ value: settings.value }).from(settings)
+    .where(and(eq(settings.key, 'ingest_log'), eq(settings.wiki_id, wikiId)))
   try { return row?.value ? JSON.parse(row.value) : [] } catch { return [] }
 }
 
-async function appendIngestLog(entry: IngestLogEntry): Promise<void> {
-  const log = await getIngestLog()
+async function appendIngestLog(entry: IngestLogEntry, wikiId: string): Promise<void> {
+  const log = await getIngestLog(wikiId)
   const updated = [entry, ...log].slice(0, 50)
-  await db.insert(settings)
-    .values({ key: 'ingest_log', value: JSON.stringify(updated) })
-    .onConflictDoUpdate({ target: settings.key, set: { value: JSON.stringify(updated), updated_at: sql`now()` } })
+  await upsertSetting('ingest_log', JSON.stringify(updated), wikiId)
 }
 
 export async function runIngest(params: {
@@ -26,13 +26,14 @@ export async function runIngest(params: {
   url?: string
   publisher?: string
   source_type?: string
+  wiki_id?: string
 }): Promise<string> {
-  const { title, raw_content, url, publisher, source_type = 'external' } = params
+  const { title, raw_content, url, publisher, source_type = 'external', wiki_id: wikiId = 'wiki_homestyle' } = params
   const sourceId = 'source_' + slugify(title)
 
   // 1. sources INSERT status='processing'
   await db.insert(sources).values({
-    id: sourceId, title, url, publisher,
+    id: sourceId, wiki_id: wikiId, title, url, publisher,
     source_type, raw_content,
     status: 'processing', synthesis_result: {},
   }).onConflictDoUpdate({
@@ -105,7 +106,7 @@ export async function runIngest(params: {
       concepts_updated: [], concepts_created: [], synthesized_at: new Date().toISOString(),
     }
     try {
-      synthResult = await synthesizeConcepts({ sourceId, aiSummary, topics })
+      synthResult = await synthesizeConcepts({ sourceId, aiSummary, topics, wikiId })
     } catch (e) {
       console.error('[ingest] synthesizeConcepts failed:', e)
     }
@@ -123,7 +124,7 @@ export async function runIngest(params: {
       concepts_updated: synthResult.concepts_updated,
       concepts_created: synthResult.concepts_created,
       date: new Date().toISOString(),
-    })
+    }, wikiId)
 
     return sourceId
 

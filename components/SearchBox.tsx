@@ -2,14 +2,14 @@
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 
-export default function SearchBox({ className }: { className?: string }) {
+export default function SearchBox({ className, searchPath = '/search' }: { className?: string; searchPath?: string }) {
   const router = useRouter()
   const [q, setQ] = useState('')
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     const query = q.trim()
-    router.push(query ? `/search?q=${encodeURIComponent(query)}` : '/search')
+    router.push(query ? `${searchPath}?q=${encodeURIComponent(query)}` : searchPath)
   }
 
   return (

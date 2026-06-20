@@ -7,10 +7,11 @@ import DiffView from '@/components/DiffView'
 import type { EditorialVersion } from '@/lib/types'
 
 export default function EditorialTab({
-  content: initialContent, versions: initialVersions,
+  content: initialContent, versions: initialVersions, wikiId,
 }: {
   content: string
   versions: EditorialVersion[]
+  wikiId?: string
 }) {
   const router = useRouter()
   const [content, setContent] = useState(initialContent)
@@ -51,7 +52,7 @@ export default function EditorialTab({
       const res = await fetch('/api/admin/editorial', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content }),
+        body: JSON.stringify({ content, wiki_id: wikiId }),
       })
       if (!res.ok) throw new Error()
       setToast('저장되었습니다')
@@ -67,7 +68,11 @@ export default function EditorialTab({
   const handleGenerateDraft = async () => {
     setGenerating(true)
     try {
-      const res = await fetch('/api/admin/synthesize-editorial', { method: 'POST' })
+      const res = await fetch('/api/admin/synthesize-editorial', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ wiki_id: wikiId }),
+      })
       if (!res.ok) throw new Error()
       setToast('초안이 생성되었습니다')
       router.refresh()

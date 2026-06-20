@@ -15,6 +15,7 @@ export async function POST(req: Request) {
     const file = fd.get('file') as File | null
     const title = (fd.get('title') as string) || ''
     const url = (fd.get('url') as string) || undefined
+    const wikiId = (fd.get('wiki_id') as string) || 'wiki_homestyle'
     if (!file) return Response.json({ error: 'file required' }, { status: 400 })
     const content = await file.text()
     const sourceId = await runIngest({
@@ -22,6 +23,7 @@ export async function POST(req: Request) {
       raw_content: content,
       url,
       source_type: 'internal',
+      wiki_id: wikiId,
     })
     return Response.json({ source_id: sourceId })
   }
@@ -31,6 +33,7 @@ export async function POST(req: Request) {
 
   let { title, content } = body as { title?: string; content?: string }
   const url: string | undefined = body.url
+  const wikiId: string = body.wiki_id ?? 'wiki_homestyle'
 
   // URL만 있고 content가 없으면 Jina Reader로 서버사이드 fetch
   if (url && !content) {
@@ -56,6 +59,7 @@ export async function POST(req: Request) {
     raw_content: content,
     url,
     source_type: 'internal',
+    wiki_id: wikiId,
   })
   return Response.json({ source_id: sourceId })
 }

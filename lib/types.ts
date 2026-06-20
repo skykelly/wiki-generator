@@ -142,6 +142,52 @@ export interface EditorialVersion {
   is_draft: boolean
 }
 
+export interface WikiItem {
+  id: string
+  slug: string
+  title: string
+  description?: string
+  topic?: string
+  language: string
+  status: string
+  created_at: string
+  updated_at: string
+}
+
+export interface ScaffoldChapter {
+  number: string
+  title: string
+  description: string
+  subsections: { number: string; title: string }[]
+  key_concepts: string[]
+}
+
+export interface ScaffoldConcept {
+  slug: string
+  title: string
+  brief: string
+  topics: string[]
+  concept_type: string
+}
+
+export interface ScaffoldResult {
+  wiki_title: string
+  description: string
+  chapters: ScaffoldChapter[]
+  concepts: ScaffoldConcept[]
+  topics_config: TopicNode[]
+  suggested_rss_feeds: { url: string; label: string }[]
+}
+
+export interface SeedProgress {
+  phase: 'scaffold' | 'drafting' | 'extracting' | 'activating' | 'done'
+  completed_chapters: number
+  total_chapters: number
+  completed_concepts: number
+  total_concepts: number
+  last_updated: string
+}
+
 export interface LintIssue {
   type: 'empty_content' | 'no_topics' | 'no_sources' | 'stale' | 'orphan'
   concept_slug: string

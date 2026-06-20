@@ -28,6 +28,7 @@ export async function POST(req: Request) {
 
   let history: ChatMessage[] = []
   let sessionId: string = typeof body?.session_id === 'string' ? body.session_id : ''
+  const wikiId: string = typeof body?.wiki_id === 'string' ? body.wiki_id : 'wiki_homestyle'
   let isNew = true
 
   if (sessionId) {
@@ -98,6 +99,7 @@ export async function POST(req: Request) {
       if (isNew) {
         await db.insert(chat_sessions).values({
           id: sessionId,
+          wiki_id: wikiId,
           user_email: userEmail,
           title: message.slice(0, 30),
           messages: newMessages,

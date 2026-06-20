@@ -11,5 +11,10 @@ export default auth((req) => {
 })
 
 export const config = {
-  matcher: ['/admin/:path*', '/chat', '/chat/:path*'],
+  matcher: [
+    '/admin/:path*',
+    '/chat', '/chat/:path*',
+    '/w/:wikiSlug/admin/:path*',
+    '/w/:wikiSlug/chat', '/w/:wikiSlug/chat/:path*',
+  ],
 }

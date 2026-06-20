@@ -1,4 +1,4 @@
-import { desc, eq, sql, isNotNull } from 'drizzle-orm'
+import { and, desc, eq, sql, isNotNull } from 'drizzle-orm'
 import { db } from './db'
 import { concepts, sources } from './db/schema'
 import { getSetting, upsertSetting } from './settings'
@@ -12,8 +12,9 @@ export async function synthesizeConcepts(params: {
   sourceId: string
   aiSummary: string
   topics: string[]
+  wikiId?: string
 }): Promise<SynthesisResult> {
-  const { aiSummary, topics } = params
+  const { aiSummary, topics, wikiId = 'wiki_homestyle' } = params
 
   // 1. concepts 전체 로드
   const allConcepts = await db.select({
@@ -23,7 +24,7 @@ export async function synthesizeConcepts(params: {
     brief: concepts.brief,
     topics: concepts.topics,
     content: concepts.content,
-  }).from(concepts)
+  }).from(concepts).where(eq(concepts.wiki_id, wikiId))
 
   // 2. topics 기반 1차 후보 필터 (교집합이 3개 미만이면 전체 사용)
   const topicsLower = new Set(topics.map((t) => t.toLowerCase()))
@@ -107,6 +108,7 @@ export async function synthesizeConcepts(params: {
     const id = `concept_${nc.slug}`
     await db.insert(concepts).values({
       id,
+      wiki_id: wikiId,
       title: nc.title,
       slug: nc.slug,
       brief: nc.brief,
@@ -129,17 +131,17 @@ export async function synthesizeConcepts(params: {
 
 // ─── synthesizeEditorial ──────────────────────────────────
 
-export async function synthesizeEditorial(): Promise<string> {
+export async function synthesizeEditorial(wikiId = 'wiki_homestyle'): Promise<string> {
   const [currentEditorial, recentConcepts, recentSources] = await Promise.all([
-    getSetting('editorial_content').then((v) => v ?? ''),
+    getSetting('editorial_content', wikiId).then((v) => v ?? ''),
     db.select({ title: concepts.title, brief: concepts.brief, topics: concepts.topics })
       .from(concepts)
-      .where(isNotNull(concepts.last_synthesized_at))
+      .where(and(eq(concepts.wiki_id, wikiId), isNotNull(concepts.last_synthesized_at)))
       .orderBy(desc(concepts.last_synthesized_at))
       .limit(10),
     db.select({ title: sources.title, one_line_summary: sources.one_line_summary, topics: sources.topics })
       .from(sources)
-      .where(eq(sources.status, 'done'))
+      .where(and(eq(sources.wiki_id, wikiId), eq(sources.status, 'done')))
       .orderBy(desc(sources.created_at))
       .limit(5),
   ])
@@ -171,7 +173,7 @@ ${recentSources.map((s) => `- ${s.title}: ${s.one_line_summary ?? ''}`).join('\n
   const newContent = response.choices[0].message.content ?? ''
 
   // editorial_versions에 draft 추가 (최대 20개)
-  const versionsRaw = await getSetting('editorial_versions')
+  const versionsRaw = await getSetting('editorial_versions', wikiId)
   const versions: EditorialVersion[] = versionsRaw ? JSON.parse(versionsRaw) : []
   const draft: EditorialVersion = {
     label: `AI 초안 (${new Date().toLocaleDateString('ko-KR')})`,
@@ -180,14 +182,14 @@ ${recentSources.map((s) => `- ${s.title}: ${s.one_line_summary ?? ''}`).join('\n
     is_draft: true,
   }
   const updated = [draft, ...versions].slice(0, 20)
-  await upsertSetting('editorial_versions', JSON.stringify(updated))
+  await upsertSetting('editorial_versions', JSON.stringify(updated), wikiId)
 
   return newContent
 }
 
 // ─── lintWiki ─────────────────────────────────────────────
 
-export async function lintWiki(): Promise<LintIssue[]> {
+export async function lintWiki(wikiId = 'wiki_homestyle'): Promise<LintIssue[]> {
   const allConcepts = await db.select({
     id: concepts.id,
     slug: concepts.slug,
@@ -197,7 +199,7 @@ export async function lintWiki(): Promise<LintIssue[]> {
     source_count: concepts.source_count,
     related_concepts: concepts.related_concepts,
     last_synthesized_at: concepts.last_synthesized_at,
-  }).from(concepts)
+  }).from(concepts).where(eq(concepts.wiki_id, wikiId))
 
   const allSlugs = new Set(allConcepts.map((c) => c.slug))
   const issues: LintIssue[] = []

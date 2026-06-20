@@ -32,7 +32,7 @@ function toForm(p: WikiPageItem): FormState {
   }
 }
 
-export default function PagesTab({ pages: initialPages }: { pages: WikiPageItem[] }) {
+export default function PagesTab({ pages: initialPages, wikiId }: { pages: WikiPageItem[]; wikiId?: string }) {
   const router = useRouter()
   const [pages, setPages] = useState(initialPages)
   const [selectedId, setSelectedId] = useState<string | null>(initialPages[0]?.id ?? null)
@@ -93,6 +93,7 @@ export default function PagesTab({ pages: initialPages }: { pages: WikiPageItem[
           summary: form.summary || undefined,
           topics: form.topics.split('\n').map((s) => s.trim()).filter(Boolean),
           content: form.content,
+          wiki_id: wikiId,
         }),
       })
       if (!res.ok) throw new Error()

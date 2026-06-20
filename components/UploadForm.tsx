@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation'
 
 type Tab = 'url' | 'text' | 'file'
 
-export default function UploadForm() {
+export default function UploadForm({ wikiId }: { wikiId?: string }) {
   const router = useRouter()
   const [tab, setTab] = useState<Tab>('url')
   const [loading, setLoading] = useState(false)
@@ -27,15 +27,23 @@ export default function UploadForm() {
     setLoading(true)
     setError('')
     try {
+      let finalBody = body
+      if (wikiId) {
+        if (body instanceof FormData) {
+          body.set('wiki_id', wikiId)
+        } else {
+          finalBody = { ...(body as object), wiki_id: wikiId }
+        }
+      }
       const res = await fetch('/api/sources/upload', {
         method: 'POST',
-        ...(body instanceof FormData
-          ? { body }
-          : { headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }),
+        ...(finalBody instanceof FormData
+          ? { body: finalBody }
+          : { headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(finalBody) }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error ?? `오류 ${res.status}`)
-      router.push('/sources')
+      router.back()
       router.refresh()
     } catch (e) {
       setError(e instanceof Error ? e.message : '알 수 없는 오류')

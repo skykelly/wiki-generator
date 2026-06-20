@@ -3,7 +3,7 @@ import { useState } from 'react'
 import ChatBox from '@/components/ChatBox'
 import type { ChatMessage, ChatSession } from '@/lib/types'
 
-export default function ChatInterface({ initialSessions }: { initialSessions: ChatSession[] }) {
+export default function ChatInterface({ initialSessions, wikiId }: { initialSessions: ChatSession[]; wikiId?: string }) {
   const [sessions, setSessions] = useState(initialSessions)
   const [activeId, setActiveId] = useState<string | undefined>(initialSessions[0]?.id)
 
@@ -57,6 +57,7 @@ export default function ChatInterface({ initialSessions }: { initialSessions: Ch
           sessionId={active?.id}
           initialMessages={active?.messages}
           onSessionUpdate={handleSessionUpdate}
+          wikiId={wikiId}
         />
       </div>
     </div>

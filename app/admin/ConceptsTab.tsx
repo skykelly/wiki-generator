@@ -42,11 +42,12 @@ function toForm(c: ConceptItem): FormState {
 }
 
 export default function ConceptsTab({
-  concepts: initialConcepts, focusSlug, onFocusConsumed,
+  concepts: initialConcepts, focusSlug, onFocusConsumed, wikiId,
 }: {
   concepts: ConceptItem[]
   focusSlug?: string | null
   onFocusConsumed?: () => void
+  wikiId?: string
 }) {
   const router = useRouter()
   const [concepts, setConcepts] = useState(initialConcepts)
@@ -114,6 +115,7 @@ export default function ConceptsTab({
           topics: form.topics.split('\n').map((s) => s.trim()).filter(Boolean),
           related_concepts: form.related_concepts.split('\n').map((s) => s.trim()).filter(Boolean),
           content: form.content,
+          wiki_id: wikiId,
         }),
       })
       if (!res.ok) throw new Error()

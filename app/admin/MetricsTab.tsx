@@ -18,7 +18,7 @@ function emptyMetric(): MetricCard {
   return { id: `metric_${Date.now()}`, title: '', stat: '', definition: '', source: '', message: '', url: '' }
 }
 
-export default function MetricsTab({ metrics: initialMetrics }: { metrics: MetricCard[] }) {
+export default function MetricsTab({ metrics: initialMetrics, wikiId }: { metrics: MetricCard[]; wikiId?: string }) {
   const router = useRouter()
   const [metrics, setMetrics] = useState(initialMetrics)
   const [saving, setSaving] = useState(false)
@@ -45,7 +45,7 @@ export default function MetricsTab({ metrics: initialMetrics }: { metrics: Metri
       const res = await fetch('/api/admin/metrics', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ metrics }),
+        body: JSON.stringify({ metrics, wiki_id: wikiId }),
       })
       if (!res.ok) throw new Error()
       setToast('저장되었습니다')

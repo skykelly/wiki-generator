@@ -29,7 +29,7 @@ function SortHeader({
   )
 }
 
-export default function SourceTable({ initialSources }: { initialSources: SourceItem[] }) {
+export default function SourceTable({ initialSources, basePath = '/sources' }: { initialSources: SourceItem[]; basePath?: string }) {
   const [sources, setSources] = useState(initialSources)
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [sortKey, setSortKey] = useState<SortKey>('created_at')
@@ -64,7 +64,7 @@ export default function SourceTable({ initialSources }: { initialSources: Source
     return (
       <div className="text-center py-16 text-neutral-600 text-sm">
         소스가 없습니다.{' '}
-        <Link href="/sources/upload" className="text-accent-500 hover:text-accent-400">새 소스 추가 →</Link>
+        <Link href={`${basePath}/upload`} className="text-accent-500 hover:text-accent-400">새 소스 추가 →</Link>
       </div>
     )
   }
@@ -173,7 +173,7 @@ export default function SourceTable({ initialSources }: { initialSources: Source
                         {/* 전체 보기 */}
                         <div>
                           <Link
-                            href={`/sources/${source.id}`}
+                            href={`${basePath}/${source.id}`}
                             className="text-xs text-accent-500 hover:text-accent-400 transition-colors"
                             onClick={(e) => e.stopPropagation()}
                           >

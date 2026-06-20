@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 
-export default function GraphTab({ builtAt }: { builtAt: string }) {
+export default function GraphTab({ builtAt, wikiId }: { builtAt: string; wikiId?: string }) {
   const router = useRouter()
   const [rebuilding, setRebuilding] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
@@ -16,7 +16,11 @@ export default function GraphTab({ builtAt }: { builtAt: string }) {
   const handleRebuild = async () => {
     setRebuilding(true)
     try {
-      const res = await fetch('/api/graph/rebuild', { method: 'POST' })
+      const res = await fetch('/api/graph/rebuild', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ wiki_id: wikiId }),
+      })
       if (!res.ok) throw new Error()
       const data = await res.json()
       setToast(`그래프를 재생성했습니다 (노드 ${data.nodes}개, 링크 ${data.links}개)`)

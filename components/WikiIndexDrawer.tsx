@@ -4,7 +4,7 @@ import type { WikiPageItem, TopicNode, ConceptItem } from '@/lib/types'
 import { topicsForConceptType } from '@/lib/topicMapping'
 
 export default function WikiIndexDrawer({
-  open, onClose, pages, topics, concepts, currentSlug,
+  open, onClose, pages, topics, concepts, currentSlug, basePath = '/wiki',
 }: {
   open: boolean
   onClose: () => void
@@ -12,6 +12,7 @@ export default function WikiIndexDrawer({
   topics: TopicNode[]
   concepts: ConceptItem[]
   currentSlug?: string
+  basePath?: string
 }) {
   const groups = new Map<string, WikiPageItem[]>()
   for (const p of pages) {
@@ -66,7 +67,7 @@ export default function WikiIndexDrawer({
                   {groups.get(num)!.map((p) => (
                     <Link
                       key={p.slug}
-                      href={`/wiki/${p.slug}`}
+                      href={`${basePath}/${p.slug}`}
                       onClick={onClose}
                       className={`text-sm px-2 py-1 rounded-md transition-colors leading-snug ${
                         p.slug === currentSlug
@@ -86,7 +87,7 @@ export default function WikiIndexDrawer({
                       {conceptGroups.get(num)!.map((c) => (
                         <Link
                           key={c.slug}
-                          href={`/concepts/${c.slug}`}
+                          href={`${basePath.replace('/wiki', '/concepts')}/${c.slug}`}
                           onClick={onClose}
                           className="text-sm px-2 py-1 rounded-md transition-colors leading-snug text-accent-500 hover:text-accent-400 hover:bg-neutral-900"
                         >

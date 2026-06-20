@@ -11,7 +11,7 @@ function topicNodeId(topic: TopicNode): string {
   return `topic_${slugify(topic.label || topic.title)}`
 }
 
-export async function rebuildGraph(): Promise<KnowledgeGraphData> {
+export async function rebuildGraph(wikiId = 'wiki_homestyle'): Promise<KnowledgeGraphData> {
   const [allConcepts, doneSources, topics] = await Promise.all([
     db.select({
       id: concepts.id,
@@ -23,7 +23,7 @@ export async function rebuildGraph(): Promise<KnowledgeGraphData> {
       source_count: concepts.source_count,
       concept_type: concepts.concept_type,
       last_synthesized_at: concepts.last_synthesized_at,
-    }).from(concepts),
+    }).from(concepts).where(eq(concepts.wiki_id, wikiId)),
     db.select({
       id: sources.id,
       title: sources.title,
@@ -32,8 +32,8 @@ export async function rebuildGraph(): Promise<KnowledgeGraphData> {
       one_line_summary: sources.one_line_summary,
       topics: sources.topics,
       synthesis_result: sources.synthesis_result,
-    }).from(sources).where(eq(sources.status, 'done')).orderBy(desc(sources.created_at)).limit(50),
-    getTopicsConfig(),
+    }).from(sources).where(eq(sources.wiki_id, wikiId)).orderBy(desc(sources.created_at)).limit(50),
+    getTopicsConfig(wikiId),
   ])
 
   const nodes: KnowledgeGraphNode[] = []
@@ -109,6 +109,6 @@ export async function rebuildGraph(): Promise<KnowledgeGraphData> {
   }
 
   const data: KnowledgeGraphData = { nodes, links, built_at: new Date().toISOString() }
-  await upsertSetting('graph_data', JSON.stringify(data))
+  await upsertSetting('graph_data', JSON.stringify(data), wikiId)
   return data
 }

@@ -4,11 +4,12 @@ import { useRouter } from 'next/navigation'
 import type { WikiPageItem, TopicNode } from '@/lib/types'
 
 export default function WikiChapterDrawer({
-  pages, topics, currentSlug,
+  pages, topics, currentSlug, basePath = '/wiki',
 }: {
   pages: WikiPageItem[]
   topics: TopicNode[]
   currentSlug: string
+  basePath?: string
 }) {
   const router = useRouter()
 
@@ -27,7 +28,7 @@ export default function WikiChapterDrawer({
       <div className="lg:hidden mb-4">
         <select
           value={currentSlug}
-          onChange={(e) => router.push(`/wiki/${e.target.value}`)}
+          onChange={(e) => router.push(`${basePath}/${e.target.value}`)}
           className="w-full bg-neutral-900 border border-neutral-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-neutral-600"
         >
           {sortedKeys.map((num) => (
@@ -51,7 +52,7 @@ export default function WikiChapterDrawer({
               {groups.get(num)!.map((p) => (
                 <Link
                   key={p.slug}
-                  href={`/wiki/${p.slug}`}
+                  href={`${basePath}/${p.slug}`}
                   className={`text-sm px-2 py-1 rounded-md transition-colors leading-snug ${
                     p.slug === currentSlug
                       ? 'bg-neutral-800 text-white'

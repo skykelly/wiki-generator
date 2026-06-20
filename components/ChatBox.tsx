@@ -15,9 +15,10 @@ interface Props {
   initialMessages?: ChatMessage[]
   onSessionUpdate?: (session: { id: string; title: string; messages: ChatMessage[] }) => void
   compact?: boolean
+  wikiId?: string
 }
 
-export default function ChatBox({ sessionId: initialSessionId, initialMessages, onSessionUpdate, compact }: Props) {
+export default function ChatBox({ sessionId: initialSessionId, initialMessages, onSessionUpdate, compact, wikiId }: Props) {
   const [sessionId, setSessionId] = useState(initialSessionId)
   const [messages, setMessages] = useState<ChatMessage[]>(initialMessages ?? [])
   const [input, setInput] = useState('')
@@ -53,7 +54,7 @@ export default function ChatBox({ sessionId: initialSessionId, initialMessages, 
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: text, session_id: sessionId }),
+        body: JSON.stringify({ message: text, session_id: sessionId, wiki_id: wikiId }),
       })
       if (!res.ok || !res.body) throw new Error()
 

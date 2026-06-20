@@ -11,11 +11,12 @@ const TYPE_STYLES: Record<LintIssue['type'], string> = {
 }
 
 export default function HealthTab({
-  ingestLog, onEditConcept,
+  ingestLog, onEditConcept, wikiId,
 }: {
   concepts: ConceptItem[]
   ingestLog: IngestLogEntry[]
   onEditConcept: (slug: string) => void
+  wikiId?: string
 }) {
   const [issues, setIssues] = useState<LintIssue[] | null>(null)
   const [linting, setLinting] = useState(false)
@@ -32,7 +33,11 @@ export default function HealthTab({
   const runLint = async () => {
     setLinting(true)
     try {
-      const res = await fetch('/api/admin/lint', { method: 'POST' })
+      const res = await fetch('/api/admin/lint', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ wiki_id: wikiId }),
+      })
       if (!res.ok) throw new Error()
       setIssues(await res.json())
     } catch {
@@ -45,7 +50,11 @@ export default function HealthTab({
   const runRebuild = async () => {
     setRebuilding(true)
     try {
-      const res = await fetch('/api/admin/rebuild-embeddings', { method: 'POST' })
+      const res = await fetch('/api/admin/rebuild-embeddings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ wiki_id: wikiId }),
+      })
       if (!res.ok) throw new Error()
       const data = await res.json()
       setToast(`${data.rebuilt}개 레코드의 embeddings를 재빌드했습니다`)

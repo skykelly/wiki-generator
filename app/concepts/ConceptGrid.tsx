@@ -10,10 +10,11 @@ function topicKeywords(topic: TopicNode): string[] {
 }
 
 export default function ConceptGrid({
-  concepts, topics,
+  concepts, topics, basePath = '/concepts',
 }: {
   concepts: ConceptItem[]
   topics: TopicNode[]
+  basePath?: string
 }) {
   const [activeTopic, setActiveTopic] = useState<string | null>(null)
   const [selectedId, setSelectedId] = useState<string | null>(null)
@@ -130,7 +131,7 @@ export default function ConceptGrid({
                         {concept.related_concepts.map((slug) => (
                           <Link
                             key={slug}
-                            href={`/concepts/${slug}`}
+                            href={`${basePath}/${slug}`}
                             className="text-xs bg-neutral-800 hover:bg-neutral-700 text-accent-400 px-2 py-0.5 rounded-md transition-colors"
                           >
                             {slug}
@@ -145,7 +146,7 @@ export default function ConceptGrid({
                           마지막 합성: {new Date(concept.last_synthesized_at).toLocaleDateString('ko-KR')}
                         </span>
                       ) : <span />}
-                      <Link href={`/concepts/${concept.slug}`} className="text-xs text-accent-500 hover:text-accent-400 transition-colors">
+                      <Link href={`${basePath}/${concept.slug}`} className="text-xs text-accent-500 hover:text-accent-400 transition-colors">
                         전체 보기 →
                       </Link>
                     </div>

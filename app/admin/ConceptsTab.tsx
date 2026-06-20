@@ -52,6 +52,7 @@ export default function ConceptsTab({
   const router = useRouter()
   const [concepts, setConcepts] = useState(initialConcepts)
   const [query, setQuery] = useState('')
+  const [statusFilter, setStatusFilter] = useState<string>('all')
   const [selectedId, setSelectedId] = useState<string | null>(initialConcepts[0]?.id ?? null)
   const [form, setForm] = useState<FormState | null>(initialConcepts[0] ? toForm(initialConcepts[0]) : null)
   const [showPreview, setShowPreview] = useState(false)
@@ -82,9 +83,12 @@ export default function ConceptsTab({
     return () => clearTimeout(timer)
   }, [form?.content, showPreview])
 
-  const filtered = concepts.filter((c) =>
-    !query || c.title.toLowerCase().includes(query.toLowerCase()) || c.slug.toLowerCase().includes(query.toLowerCase())
-  )
+  const candidateCount = concepts.filter((c) => c.concept_status === 'candidate').length
+
+  const filtered = concepts.filter((c) => {
+    if (statusFilter !== 'all' && c.concept_status !== statusFilter) return false
+    return !query || c.title.toLowerCase().includes(query.toLowerCase()) || c.slug.toLowerCase().includes(query.toLowerCase())
+  })
 
   const selectConcept = (c: ConceptItem) => {
     setSelectedId(c.id)
@@ -94,6 +98,20 @@ export default function ConceptsTab({
 
   const updateField = <K extends keyof FormState>(key: K, value: FormState[K]) => {
     setForm((f) => (f ? { ...f, [key]: value } : f))
+  }
+
+  const quickApprove = async (c: ConceptItem) => {
+    await fetch('/api/admin/concept', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        id: c.id, title: c.title, slug: c.slug, brief: c.brief,
+        concept_type: c.concept_type, concept_status: 'canonical',
+        confidence: c.confidence, aliases: c.aliases, topics: c.topics,
+        related_concepts: c.related_concepts, content: c.content, wiki_id: wikiId,
+      }),
+    })
+    router.refresh()
   }
 
   const handleSave = async () => {
@@ -134,8 +152,16 @@ export default function ConceptsTab({
       <div>
         <input
           type="text" value={query} onChange={(e) => setQuery(e.target.value)}
-          placeholder="검색…" className={`${inputClass} mb-3`}
+          placeholder="검색…" className={`${inputClass} mb-2`}
         />
+        <div className="flex gap-1 mb-3">
+          {[['all', '전체'], ['candidate', `검토 필요 ${candidateCount > 0 ? `(${candidateCount})` : ''}`], ['canonical', '정식']].map(([key, label]) => (
+            <button key={key} onClick={() => setStatusFilter(key)}
+              className={`px-2.5 py-1 text-xs rounded-lg transition-colors ${statusFilter === key ? 'bg-neutral-700 text-white' : 'text-neutral-500 hover:text-neutral-300'}`}>
+              {label}
+            </button>
+          ))}
+        </div>
         <div className="flex flex-col gap-1 max-h-[70vh] overflow-y-auto pr-1">
           {filtered.map((c) => (
             <button
@@ -149,16 +175,26 @@ export default function ConceptsTab({
                 <span className="text-sm text-white truncate">{c.title}</span>
                 <span className="text-xs text-neutral-600 shrink-0">{c.source_count}</span>
               </div>
-              <div className="flex items-center gap-1.5 mt-1">
-                <span className={`text-xs px-1.5 py-0.5 rounded-md ${
-                  c.concept_status === 'canonical'
-                    ? 'bg-emerald-950/60 text-emerald-600 border border-emerald-900/50'
-                    : 'bg-neutral-800 text-neutral-500'
-                }`}>
-                  {c.concept_status}
-                </span>
-                {c.last_synthesized_at && (
-                  <span className="text-xs text-neutral-700">{new Date(c.last_synthesized_at).toLocaleDateString('ko-KR')}</span>
+              <div className="flex items-center justify-between gap-1.5 mt-1">
+                <div className="flex items-center gap-1.5">
+                  <span className={`text-xs px-1.5 py-0.5 rounded-md ${
+                    c.concept_status === 'canonical'
+                      ? 'bg-emerald-950/60 text-emerald-600 border border-emerald-900/50'
+                      : 'bg-neutral-800 text-neutral-500'
+                  }`}>
+                    {c.concept_status}
+                  </span>
+                  {c.last_synthesized_at && (
+                    <span className="text-xs text-neutral-700">{new Date(c.last_synthesized_at).toLocaleDateString('ko-KR')}</span>
+                  )}
+                </div>
+                {c.concept_status === 'candidate' && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); quickApprove(c) }}
+                    className="text-xs text-emerald-600 hover:text-emerald-400 shrink-0 transition-colors"
+                  >
+                    승인
+                  </button>
                 )}
               </div>
             </button>

@@ -150,6 +150,7 @@ export interface WikiItem {
   topic?: string
   language: string
   status: string
+  scaffold_result?: ScaffoldResult
   created_at: string
   updated_at: string
 }

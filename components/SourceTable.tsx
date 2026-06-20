@@ -5,11 +5,6 @@ import type { SourceItem } from '@/lib/types'
 
 type SortKey = 'title' | 'publisher' | 'published_at' | 'created_at'
 
-const SORT_LABELS: Record<SortKey, string> = {
-  title: 'Title', publisher: 'Publisher',
-  published_at: 'Date', created_at: 'Ingested',
-}
-
 function SortHeader({
   label, sortKey, current, dir, onSort,
 }: {

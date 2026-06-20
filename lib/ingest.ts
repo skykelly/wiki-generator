@@ -5,7 +5,7 @@ import { slugify } from './slug'
 import { chunkText, rebuildEmbeddings } from './embed'
 import { synthesizeConcepts } from './synthesize'
 import { getOpenAI } from './openai'
-import { getSetting, upsertSetting } from './settings'
+import { upsertSetting } from './settings'
 import type { SynthesisResult, IngestLogEntry } from './types'
 
 async function getIngestLog(wikiId: string): Promise<IngestLogEntry[]> {

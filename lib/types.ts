@@ -151,6 +151,7 @@ export interface WikiItem {
   language: string
   status: string
   scaffold_result?: ScaffoldResult
+  seed_progress?: SeedProgress
   created_at: string
   updated_at: string
 }

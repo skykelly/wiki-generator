@@ -81,6 +81,7 @@ function mapWiki(r: typeof wikis.$inferSelect): WikiItem {
     language: r.language ?? 'ko',
     status: r.status ?? 'ready',
     scaffold_result: r.scaffold_result as import('./types').ScaffoldResult | undefined,
+    seed_progress: r.seed_progress as import('./types').SeedProgress | undefined,
     created_at: r.created_at?.toISOString() ?? '',
     updated_at: r.updated_at?.toISOString() ?? '',
   }

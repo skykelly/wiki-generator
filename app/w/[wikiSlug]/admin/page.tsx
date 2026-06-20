@@ -29,7 +29,15 @@ export default async function WikiAdminPage({
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
-      <h1 className="text-lg font-semibold text-white mb-6">Admin</h1>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-lg font-semibold text-white">Admin — {wikiSlug}</h1>
+        <a
+          href={`/w/${wikiSlug}/admin/seed`}
+          className="text-sm text-cyan-400 hover:text-cyan-300 border border-cyan-800/50 px-3 py-1.5 rounded-lg transition-colors"
+        >
+          시드 관리 →
+        </a>
+      </div>
       <AdminTabs
         editorialContent={editorialContent}
         editorialVersions={editorialVersions}

@@ -201,10 +201,16 @@ export default function SeedManager({ wiki, wikiSlug }: Props) {
             </button>
           )}
           {phase === 'ready' && (
-            <Link href={`/w/${wikiSlug}`}
-              className="bg-green-500 hover:bg-green-400 text-black font-semibold px-4 py-2 rounded-lg text-sm transition-colors">
-              위키 보기 →
-            </Link>
+            <div className="flex items-center gap-3 flex-wrap">
+              <Link href={`/w/${wikiSlug}`}
+                className="bg-green-500 hover:bg-green-400 text-black font-semibold px-4 py-2 rounded-lg text-sm transition-colors">
+                위키 보기 →
+              </Link>
+              <Link href={`/w/${wikiSlug}/admin`}
+                className="text-sm text-cyan-400 hover:text-cyan-300 border border-cyan-800/50 px-3 py-2 rounded-lg transition-colors">
+                Admin → Editorial에서 AI 초안 발행 →
+              </Link>
+            </div>
           )}
         </div>
       </div>

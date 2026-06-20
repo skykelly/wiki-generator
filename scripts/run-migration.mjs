@@ -21,7 +21,11 @@ if (!connectionString) {
 }
 
 const pool = new Pool({ connectionString })
-const sql = readFileSync('./migrations/001_initial.sql', 'utf-8')
+const files = process.argv[2]
+  ? [process.argv[2]]
+  : ['001_initial.sql', '002_add_image_columns.sql', '003_multi_tenant.sql', '004_wiki_rag_filter.sql']
+
+const sql = files.map(f => readFileSync(`./migrations/${f}`, 'utf-8')).join('\n')
 
 /**
  * $$ 달러 인용 블록을 인식하는 구문 분리기.
@@ -72,7 +76,8 @@ const statements = splitStatements(sql).filter(s =>
   s.replace(/^--.*$/gm, '').trim().length > 0
 )
 
-console.log(`\n📋 ${statements.length}개 구문 실행\n`)
+console.log(`\n📋 파일: ${files.join(', ')}`)
+console.log(`📋 ${statements.length}개 구문 실행\n`)
 
 const client = await pool.connect()
 try {
